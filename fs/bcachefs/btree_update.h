@@ -133,6 +133,8 @@ static inline int __must_check bch2_trans_update_buffered(struct btree_trans *tr
 					    enum btree_id btree,
 					    struct bkey_i *k)
 {
+	kmsan_check_memory(k, bkey_bytes(&k->k));
+
 	if (unlikely(!btree_type_uses_write_buffer(btree))) {
 		int ret = bch2_btree_write_buffer_insert_err(trans, btree, k);
 		dump_stack();
@@ -168,6 +170,8 @@ void bch2_trans_commit_hook(struct btree_trans *,
 int __bch2_trans_commit(struct btree_trans *, unsigned);
 
 int bch2_trans_log_msg(struct btree_trans *, struct printbuf *);
+int bch2_trans_log_bkey(struct btree_trans *, enum btree_id, unsigned, struct bkey_i *);
+
 __printf(2, 3) int bch2_fs_log_msg(struct bch_fs *, const char *, ...);
 __printf(2, 3) int bch2_journal_log_msg(struct bch_fs *, const char *, ...);
 
@@ -218,7 +222,7 @@ static inline void bch2_trans_reset_updates(struct btree_trans *trans)
 	trans->extra_disk_res		= 0;
 }
 
-static inline struct bkey_i *__bch2_bkey_make_mut_noupdate(struct btree_trans *trans, struct bkey_s_c k,
+static __always_inline struct bkey_i *__bch2_bkey_make_mut_noupdate(struct btree_trans *trans, struct bkey_s_c k,
 						  unsigned type, unsigned min_bytes)
 {
 	unsigned bytes = max_t(unsigned, min_bytes, bkey_bytes(k.k));
@@ -241,7 +245,7 @@ static inline struct bkey_i *__bch2_bkey_make_mut_noupdate(struct btree_trans *t
 	return mut;
 }
 
-static inline struct bkey_i *bch2_bkey_make_mut_noupdate(struct btree_trans *trans, struct bkey_s_c k)
+static __always_inline struct bkey_i *bch2_bkey_make_mut_noupdate(struct btree_trans *trans, struct bkey_s_c k)
 {
 	return __bch2_bkey_make_mut_noupdate(trans, k, 0, 0);
 }
