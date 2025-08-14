@@ -238,6 +238,23 @@ static int journal_entry_add(struct bch_fs *c, struct bch_dev *ca,
 		return ret;
 	}
 replace:
+	/* Drop overwrites, log entries if we don't need them: */
+	if (!c->opts.retain_recovery_info &&
+	    !c->opts.journal_rewind) {
+		struct jset_entry *dst = j->start;
+		vstruct_for_each_safe(j, src) {
+			if (src->type == BCH_JSET_ENTRY_log ||
+			    src->type == BCH_JSET_ENTRY_overwrite)
+				continue;
+
+			memcpy(dst, src, vstruct_bytes(src));
+			dst = vstruct_next(dst);
+		}
+
+		j->u64s = cpu_to_le32((u64 *) dst - j->_data);
+		bytes = vstruct_bytes(j);
+	}
+
 	i = kvmalloc(offsetof(struct journal_replay, j) + bytes, GFP_KERNEL);
 	if (!i)
 		return bch_err_throw(c, ENOMEM_journal_entry_add);
