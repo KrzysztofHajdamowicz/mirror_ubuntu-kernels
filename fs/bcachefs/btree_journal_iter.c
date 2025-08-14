@@ -412,9 +412,9 @@ static void __bch2_journal_key_overwritten(struct journal_keys *keys, size_t pos
 	bool next_overwritten = next && next->overwritten;
 
 	struct journal_key_range_overwritten *prev_range =
-		prev_overwritten ? overwrite_range(keys, prev->overwritten_range) : NULL;
+		prev_overwritten ? __overwrite_range(keys, prev->overwritten_range) : NULL;
 	struct journal_key_range_overwritten *next_range =
-		next_overwritten ? overwrite_range(keys, next->overwritten_range) : NULL;
+		next_overwritten ? __overwrite_range(keys, next->overwritten_range) : NULL;
 
 	BUG_ON(prev_range && prev_range->end != idx);
 	BUG_ON(next_range && next_range->start != idx + 1);
