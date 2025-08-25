@@ -150,12 +150,12 @@ enum fsck_err_opts {
 	  NULL,		"Number of consecutive write errors allowed before kicking out a device")\
 	x(metadata_replicas,		u8,				\
 	  OPT_FS|OPT_FORMAT|OPT_MOUNT|OPT_RUNTIME,			\
-	  OPT_UINT(1, BCH_REPLICAS_MAX),				\
+	  OPT_UINT(1, BCH_REPLICAS_MAX + 1),				\
 	  BCH_SB_META_REPLICAS_WANT,	1,				\
 	  "#",		"Number of metadata replicas")			\
 	x(data_replicas,		u8,				\
 	  OPT_FS|OPT_INODE|OPT_FORMAT|OPT_MOUNT|OPT_RUNTIME,		\
-	  OPT_UINT(1, BCH_REPLICAS_MAX),				\
+	  OPT_UINT(1, BCH_REPLICAS_MAX + 1),				\
 	  BCH_SB_DATA_REPLICAS_WANT,	1,				\
 	  "#",		"Number of data replicas")			\
 	x(metadata_replicas_required, u8,				\
@@ -165,7 +165,7 @@ enum fsck_err_opts {
 	  "#",		NULL)						\
 	x(data_replicas_required,	u8,				\
 	  OPT_FS|OPT_FORMAT|OPT_MOUNT,					\
-	  OPT_UINT(1, BCH_REPLICAS_MAX),				\
+	  OPT_UINT(1, BCH_REPLICAS_MAX + 1),				\
 	  BCH_SB_DATA_REPLICAS_REQ,	1,				\
 	  "#",		NULL)						\
 	x(encoded_extent_max,		u32,				\
@@ -242,7 +242,7 @@ enum fsck_err_opts {
 	x(inodes_32bit,			u8,				\
 	  OPT_FS|OPT_INODE|OPT_FORMAT|OPT_MOUNT|OPT_RUNTIME,		\
 	  OPT_BOOL(),							\
-	  BCH_SB_INODE_32BIT,		true,				\
+	  BCH_SB_INODE_32BIT,		false,				\
 	  NULL,		"Constrain inode numbers to 32 bits")		\
 	x(shard_inode_numbers_bits,	u8,				\
 	  OPT_FS|OPT_FORMAT,						\
@@ -321,6 +321,11 @@ enum fsck_err_opts {
 	  OPT_BOOL(),							\
 	  BCH2_NO_SB_OPT,		false,				\
 	  NULL,		"Don't kick drives out when splitbrain detected")\
+	x(no_version_check,		u8,				\
+	  OPT_HIDDEN,							\
+	  OPT_BOOL(),							\
+	  BCH2_NO_SB_OPT,		false,				\
+	  NULL,		"Don't fail reading the superblock due to incompatible version")\
 	x(verbose,			u8,				\
 	  OPT_FS|OPT_MOUNT|OPT_RUNTIME,					\
 	  OPT_BOOL(),							\
@@ -529,7 +534,7 @@ enum fsck_err_opts {
 	  "size",	"Specifies the bucket size; must be greater than the btree node size")\
 	x(durability,			u8,				\
 	  OPT_DEVICE|OPT_RUNTIME|OPT_SB_FIELD_ONE_BIAS,			\
-	  OPT_UINT(0, BCH_REPLICAS_MAX),				\
+	  OPT_UINT(0, BCH_REPLICAS_MAX + 1),				\
 	  BCH_MEMBER_DURABILITY,	1,				\
 	  "n",		"Data written to this device will be considered\n"\
 			"to have already been replicated n times")	\
@@ -665,16 +670,19 @@ int bch2_parse_mount_opts(struct bch_fs *, struct bch_opts *, struct printbuf *,
 
 /* inode opts: */
 
-struct bch_io_opts {
+struct bch_inode_opts {
 #define x(_name, _bits)	u##_bits _name;
 	BCH_INODE_OPTS()
 #undef x
+
 #define x(_name, _bits)	u64 _name##_from_inode:1;
 	BCH_INODE_OPTS()
 #undef x
+
+	u32 change_cookie;
 };
 
-static inline void bch2_io_opts_fixups(struct bch_io_opts *opts)
+static inline void bch2_io_opts_fixups(struct bch_inode_opts *opts)
 {
 	if (!opts->background_target)
 		opts->background_target = opts->foreground_target;
@@ -687,7 +695,7 @@ static inline void bch2_io_opts_fixups(struct bch_io_opts *opts)
 	}
 }
 
-struct bch_io_opts bch2_opts_to_inode_opts(struct bch_opts);
+void bch2_inode_opts_get(struct bch_fs *, struct bch_inode_opts *);
 bool bch2_opt_is_inode_opt(enum bch_opt_id);
 
 #endif /* _BCACHEFS_OPTS_H */
