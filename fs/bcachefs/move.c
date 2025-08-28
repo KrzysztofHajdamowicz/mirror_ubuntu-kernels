@@ -790,8 +790,8 @@ static int __bch2_move_data_phys(struct moving_context *ctxt,
 			goto next;
 
 		if (!bp.v->level) {
-			ret = bch2_extent_get_io_opts_one(trans, &io_opts, &iter, k,
-							  SET_NEEDS_REBALANCE_other);
+			ret = bch2_extent_get_apply_io_opts_one(trans, &io_opts, &iter, k,
+								SET_NEEDS_REBALANCE_other);
 			if (ret) {
 				bch2_trans_iter_exit(&iter);
 				continue;

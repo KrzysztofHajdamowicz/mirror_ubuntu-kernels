@@ -72,6 +72,9 @@ struct bch_inode_opts *bch2_extent_get_apply_io_opts(struct btree_trans *,
 int bch2_extent_get_io_opts_one(struct btree_trans *, struct bch_inode_opts *,
 				struct btree_iter *, struct bkey_s_c,
 				enum set_needs_rebalance_ctx);
+int bch2_extent_get_apply_io_opts_one(struct btree_trans *, struct bch_inode_opts *,
+				      struct btree_iter *, struct bkey_s_c,
+				      enum set_needs_rebalance_ctx);
 
 int bch2_set_rebalance_needs_scan_trans(struct btree_trans *, u64);
 int bch2_set_rebalance_needs_scan(struct bch_fs *, u64 inum);

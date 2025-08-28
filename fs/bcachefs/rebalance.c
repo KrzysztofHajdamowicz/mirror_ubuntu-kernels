@@ -340,8 +340,7 @@ struct bch_inode_opts *bch2_extent_get_apply_io_opts(struct btree_trans *trans,
 	if (IS_ERR(opts) || btree_iter_path(trans, extent_iter)->level)
 		return opts;
 
-	int ret = bch2_get_update_rebalance_opts(trans, opts, extent_iter, extent_k,
-						 SET_NEEDS_REBALANCE_other);
+	int ret = bch2_get_update_rebalance_opts(trans, opts, extent_iter, extent_k, ctx);
 	return ret ? ERR_PTR(ret) : opts;
 }
 
@@ -372,8 +371,20 @@ int bch2_extent_get_io_opts_one(struct btree_trans *trans,
 		}
 	}
 
-	return bch2_get_update_rebalance_opts(trans, io_opts, extent_iter, extent_k,
-					      ctx);
+	return 0;
+}
+
+int bch2_extent_get_apply_io_opts_one(struct btree_trans *trans,
+				      struct bch_inode_opts *io_opts,
+				      struct btree_iter *extent_iter,
+				      struct bkey_s_c extent_k,
+				      enum set_needs_rebalance_ctx ctx)
+{
+	int ret = bch2_extent_get_io_opts_one(trans, io_opts, extent_iter, extent_k, ctx);
+	if (ret || btree_iter_path(trans, extent_iter)->level)
+		return ret;
+
+	return bch2_get_update_rebalance_opts(trans, io_opts, extent_iter, extent_k, ctx);
 }
 
 #define REBALANCE_WORK_SCAN_OFFSET	(U64_MAX - 1)
